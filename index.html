@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PoseWear Men · Thư viện Tư thế &amp; Thời trang Nam (VI/EN) + AI Try-On</title>
+  <meta name="description" content="Thư viện tư thế nam đa góc máy (SVG 3D), trang phục nam, chân dung tóc nam kèm prompt Việt/Anh và AI Try-On Studio chạy trực tiếp trên trình duyệt.">
+  <meta name="theme-color" content="#ffffff">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css?v=1.0">
+  <script>
+    (function(){
+      try{
+        var t=localStorage.getItem('pw_theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+        document.documentElement.dataset.theme=t;
+        if(localStorage.getItem('pw_introX'))document.documentElement.classList.add('nointro');
+      }catch(e){}
+    })();
+  </script>
+</head>
+<body>
+  <header class="top" id="top">
+    <a class="brand" href="#pose" id="brandLink">
+      <span class="mark" aria-hidden="true">
+        <svg viewBox="0 0 32 32"><circle cx="16" cy="6.6" r="4" fill="currentColor"/><path d="M16 13.4 3.4 25.6h25.2z" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="wm"><b>PoseWear Men</b><span class="ver">v1.0</span></span>
+    </a>
+
+    <nav class="tabs" role="tablist" id="mainTabs">
+      <button role="tab" data-tab="pose" class="on"><span data-i18n="tab_pose">Tư thế Nam</span><i id="nPose">24</i></button>
+      <button role="tab" data-tab="costume"><span data-i18n="tab_cos">Trang phục Nam</span><i id="nCos">24</i></button>
+      <button role="tab" data-tab="portrait"><span data-i18n="tab_por">Tóc &amp; Mặt Nam</span><i id="nPor">12</i></button>
+      <button role="tab" data-tab="studio"><span data-i18n="tab_stu">Thử đồ AI</span></button>
+      <button role="tab" data-tab="fav"><span data-i18n="tab_fav">Yêu thích</span><i id="nFav"></i></button>
+      <button role="tab" data-tab="recent"><span data-i18n="tab_rec">Gần đây</span><i id="nRec"></i></button>
+    </nav>
+
+    <div class="search">
+      <svg class="sic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" autocomplete="off" placeholder="Tìm tư thế, trang phục, màu sắc, kiểu tóc...">
+      <button id="qx" class="qx" hidden aria-label="Clear">✕</button>
+      <div id="qsug" hidden></div>
+    </div>
+
+    <div class="tools">
+      <button id="openImport" class="upbtn" type="button" data-i18n="btn_upload">+ Tải ảnh / JSON</button>
+      <div class="seg" role="group" aria-label="Language" id="uiLangSeg">
+        <button type="button" data-uilang="vi" class="on">VI</button>
+        <button type="button" data-uilang="en">EN</button>
+      </div>
+      <button id="theme" class="icon" type="button" aria-label="Theme">
+        <svg class="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32 1.41-1.41"/></svg>
+        <svg class="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg>
+      </button>
+      <button id="help" class="icon" type="button" aria-label="Shortcuts">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.7 2.2c-.8.4-1.2 1-1.2 1.8m0 3.5h.01"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div class="intro" id="intro">
+    <p>
+      <b data-i18n="intro_title">PoseWear phiên bản Nam (VI/EN)</b>
+      <span data-i18n="intro_desc">Sẵn 24 tư thế nam 3D SVG (120 góc máy), 24 outfit nam, 12 kiểu tóc/chân dung nam. Hỗ trợ tải thêm ảnh thật hoặc nhập JSON tùy biến và thử đồ AI bằng API Key cá nhân.</span>
+    </p>
+    <button type="button" class="sm pri" data-go="studio" data-i18n="intro_cta">Mở Studio AI</button>
+    <button type="button" class="ix" id="introX" aria-label="Close">✕</button>
+  </div>
+
+  <div class="bar" id="bar">
+    <div class="tbar">
+      <span id="count"></span>
+      <div id="active"></div>
+      <button id="clearAll" class="sm ghost" type="button" hidden data-i18n="btn_clear_filter">Xóa lọc</button>
+      <div class="sp"></div>
+      <div id="favTools" hidden>
+        <button id="expFav" class="sm" type="button" data-i18n="btn_exp_fav">Xuất JSON</button>
+        <button id="impFav" class="sm" type="button" data-i18n="btn_imp_fav">Nhập JSON</button>
+        <input id="impFavF" type="file" accept=".json,application/json" hidden>
+        <button id="clrFav" class="sm ghost" type="button" data-i18n="btn_clr">Xóa hết</button>
+      </div>
+      <button id="clrRec" class="sm ghost" type="button" hidden data-i18n="btn_clr_rec">Xóa lịch sử</button>
+      <button id="fBtn" class="fbtn" type="button">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+        <span data-i18n="btn_filter">Bộ lọc</span> <b id="fN"></b>
+      </button>
+      <button id="batchBtn" class="fbtn" type="button">
+        <svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><path d="m14 16.5 2 2 4-4"/></svg>
+        <span data-i18n="btn_batch">Chọn nhiều</span>
+      </button>
+      <select id="sort" aria-label="Sort">
+        <option value="def" data-i18n="sort_def">Mặc định</option>
+        <option value="rev" data-i18n="sort_rev">Mới nhất / Đảo ngược</option>
+        <option value="fav" data-i18n="sort_fav">Ưu tiên Yêu thích</option>
+        <option value="shuf" data-i18n="sort_shuf">Xáo trộn ngẫu nhiên</option>
+      </select>
+      <button id="rand" class="sm" type="button" data-i18n="btn_rand">Ngẫu nhiên</button>
+    </div>
+  </div>
+
+  <section class="filters" id="filters" aria-label="Filters"></section>
+
+  <main class="grid" id="grid"></main>
+
+  <section id="empty" hidden>
+    <div class="emo" id="emptyIco"></div>
+    <h3 id="emptyT"></h3>
+    <p id="emptyP"></p>
+    <div id="sugg"></div>
+    <div class="ego" id="emptyGo"></div>
+    <button id="reset" class="pri" type="button" data-i18n="btn_reset">Đặt lại bộ lọc</button>
+  </section>
+
+  <div id="sentinel" style="height:2px"></div>
+
+  <!-- Studio Tab (3-Column App Layout) -->
+  <section id="studio" hidden>
+    <div class="st-app">
+      <!-- Left Column: Inputs -->
+      <div class="st-l">
+        <div class="seg modes" role="group">
+          <button type="button" data-mode="tryon" class="on" data-i18n="st_mode_tryon">Thử đồ từ ảnh thật</button>
+          <button type="button" data-mode="gen" data-i18n="st_mode_gen">Tạo mẫu nam mới</button>
+        </div>
+        <p class="fine" id="stLead" style="margin:0 4px"></p>
+
+        <!-- Step 1: Person / Male Model -->
+        <div class="step" data-s="1">
+          <div class="sh">
+            <i>1</i>
+            <b id="s1T">Ảnh người mẫu nam</b>
+            <small id="s1R">Bắt buộc</small>
+            <span class="sp"></span>
+            <button type="button" class="lnk" data-pick="portrait" data-i18n="st_pick_por">Chọn từ kho</button>
+          </div>
+          <div class="persons" id="wbPersons"></div>
+          <div class="drop" id="wbDrop" tabindex="0" role="button">
+            <div class="dz">
+              <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+              <b data-i18n="st_drop_p">Tải ảnh nam lên hoặc Ctrl+V</b>
+              <small data-i18n="st_drop_p_sub">JPG / PNG / WebP · Tối đa 3 ảnh</small>
+            </div>
+            <input id="wbFile" type="file" accept="image/*" multiple hidden>
+          </div>
+          <div id="wbChar" hidden>
+            <div class="chips" id="wbChars"></div>
+            <textarea id="wbCharTxt" rows="2" hidden placeholder="Mô tả mẫu nam tùy chỉnh (tuổi, kiểu tóc, vóc dáng)..."></textarea>
+          </div>
+        </div>
+
+        <!-- Step 2: Outfit -->
+        <div class="step" data-s="2">
+          <div class="sh">
+            <i>2</i>
+            <b data-i18n="st_s2">Trang phục nam</b>
+            <small data-i18n="st_req">Bắt buộc</small>
+            <span class="sp"></span>
+            <label class="lnk" style="cursor:pointer"><span data-i18n="st_up_cos">Tải ảnh đồ</span><input id="wbGFile" type="file" accept="image/*" multiple hidden></label>
+            <button type="button" class="lnk" data-pick="costume" data-i18n="st_pick_cos">Chọn từ kho</button>
+          </div>
+          <div class="slot" id="wbG"></div>
+        </div>
+
+        <!-- Step 3: Pose -->
+        <div class="step" data-s="3">
+          <div class="sh">
+            <i>3</i>
+            <b data-i18n="st_s3">Tư thế nam (SVG / Ảnh)</b>
+            <small data-i18n="st_opt">Tùy chọn</small>
+            <span class="sp"></span>
+            <button type="button" class="lnk" data-pick="pose" data-i18n="st_pick_pose">Chọn tư thế</button>
+          </div>
+          <div class="slot" id="wbPo"></div>
+          <div class="row">
+            <button type="button" id="wbAllAng" class="sm" hidden data-i18n="st_expand_ang">Mở đủ 5 góc máy</button>
+            <div class="seg" id="wbBatch" hidden>
+              <button type="button" data-bm="each" class="on" data-i18n="st_bm_each">Mỗi tư thế 1 ảnh</button>
+              <button type="button" data-bm="sheet" data-i18n="st_bm_sheet">Ghép lưới 1 ảnh</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center Column: Stage -->
+      <div class="st-c">
+        <div class="onb" id="wbOnb">
+          <div>
+            <b data-i18n="st_onb_t">Chưa cấu hình API Key (BYOK)</b>
+            <p data-i18n="st_onb_p">Key lưu cục bộ trong trình duyệt, hỗ trợ OpenAI, Gemini, Seedream và Relay tùy chỉnh. Bạn vẫn có thể tạo &amp; copy Prompt miễn phí.</p>
+          </div>
+          <span class="sp"></span>
+          <button type="button" class="sm pri" id="wbOnbGo" data-i18n="st_cfg_btn">Cài đặt API</button>
+        </div>
+
+        <div class="stage" id="wbStage">
+          <div class="ph0" id="wbPh0">
+            <span data-i18n="st_stage_t">Khu vực xem kết quả thử đồ AI</span>
+            <p data-i18n="st_stage_p">Chọn ảnh/mẫu nam, trang phục &amp; tư thế rồi bấm Tạo ảnh — hoặc copy Prompt ở cột phải để dùng với Midjourney / Flux / Gemini.</p>
+          </div>
+          <div class="cmp" id="wbCmp" hidden>
+            <img id="wbAfter" alt="Result">
+            <div class="bef"><img id="wbBefore" alt="Before"></div>
+            <div class="hdl"><span></span></div>
+            <input id="wbRange" type="range" min="0" max="100" value="50" aria-label="Before After">
+            <em class="l" data-i18n="st_before">Ảnh gốc</em>
+            <em class="r" data-i18n="st_after">Kết quả</em>
+          </div>
+          <div class="busy" id="wbBusy" hidden>
+            <b id="wbStage1">Đang xử lý...</b>
+            <div class="bar0"><i id="wbProg"></i></div>
+            <small id="wbTime">0s</small>
+            <button type="button" class="sm" id="wbStop" data-i18n="btn_cancel">Hủy</button>
+          </div>
+          <div class="err" id="wbErr" hidden></div>
+        </div>
+
+        <div class="warn" id="wbWarn" hidden></div>
+        <div class="res" id="wbRes" hidden></div>
+        <div class="row out-act" id="wbOutAct" hidden>
+          <button type="button" class="sm pri" id="wbDl" data-i18n="st_dl">Tải PNG</button>
+          <button type="button" class="sm" id="wbZip" hidden data-i18n="st_zip">Tải ZIP</button>
+          <button type="button" class="sm" id="wbCmpT" data-i18n="st_cmp">Tắt so sánh</button>
+          <button type="button" class="sm" id="wbUse" data-i18n="st_use_as">Dùng làm ảnh gốc</button>
+          <button type="button" class="sm" id="wbAgain" data-i18n="st_again">Tạo lại</button>
+          <span class="sp"></span>
+          <small id="wbMeta" class="mu"></small>
+        </div>
+      </div>
+
+      <!-- Right Column: Style, Prompt, History, Go -->
+      <div class="st-r">
+        <button type="button" class="cfg" id="wbCfg">
+          <span class="dot" id="wbDot"></span>
+          <span id="wbProv">Chưa cấu hình API</span>
+          <b data-i18n="st_edit">Cài đặt</b>
+        </button>
+
+        <div class="quick">
+          <div class="lab0" data-i18n="st_style_lab">Phong cách ánh sáng &amp; bối cảnh</div>
+          <div class="chips" id="wbStyles"></div>
+          <div class="row" style="margin-top:10px">
+            <label class="lab"><span data-i18n="st_ar">Tỷ lệ</span>
+              <select id="wbAR">
+                <option value="auto">Auto</option>
+                <option value="3:4" selected>3:4</option>
+                <option value="2:3">2:3</option>
+                <option value="9:16">9:16</option>
+                <option value="1:1">1:1</option>
+                <option value="4:3">4:3</option>
+                <option value="16:9">16:9</option>
+              </select>
+            </label>
+            <label class="lab"><span data-i18n="st_cnt">Số ảnh</span>
+              <select id="wbN">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+              </select>
+            </label>
+          </div>
+          <label class="tg" style="margin-top:10px">
+            <input type="checkbox" id="wbKeepBg" checked>
+            <span><b data-i18n="st_keep_bg">Giữ bối cảnh ảnh gốc</b></span>
+          </label>
+        </div>
+
+        <details class="adv" open>
+          <summary><span data-i18n="st_prompt_title">Prompt tự động (EN/VI)</span><span class="sp"></span><small data-i18n="st_prompt_sub">Bấm copy dùng ngay</small></summary>
+          <div class="row">
+            <div class="seg">
+              <button type="button" data-pl="en" class="on">English Prompt</button>
+              <button type="button" data-pl="vi">Mô tả Việt</button>
+            </div>
+            <span class="sp"></span>
+            <button type="button" class="sm" id="wbReP" data-i18n="st_rep">Tạo lại</button>
+            <button type="button" class="sm pri" id="wbCopyP" data-i18n="btn_copy">Copy</button>
+          </div>
+          <textarea id="wbPrompt" rows="5"></textarea>
+          <textarea id="wbExtra" rows="2" placeholder="Yêu cầu thêm (ví dụ: golden hour, 85mm lens, sharp focus)..."></textarea>
+          <label class="tg" style="margin-top:8px">
+            <input type="checkbox" id="wbNeutral" checked>
+            <span><b data-i18n="st_neutral">Giảm chặn nhầm kiểm duyệt</b><small data-i18n="st_neutral_sub">Viết lại mô tả theo văn phong lookbook thương mại trung tính khi gọi API.</small></span>
+          </label>
+        </details>
+
+        <div class="hist">
+          <div class="sh" style="margin-bottom:8px">
+            <b data-i18n="st_hist">Lịch sử tạo (IndexedDB)</b>
+            <span class="sp"></span>
+            <button type="button" class="lnk" id="wbHClr" data-i18n="btn_clr">Xóa hết</button>
+          </div>
+          <div class="hl" id="wbHist"></div>
+        </div>
+
+        <div class="gobar">
+          <div class="gb-i">
+            <b id="wbEst">Tạo 1 ảnh</b>
+            <span id="wbHint" class="mu"></span>
+          </div>
+          <button type="button" class="pri big" id="wbGo" data-i18n="st_go">Tạo ảnh AI</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Floating Prompt Combo Tray -->
+  <aside id="tray" hidden>
+    <div class="tray-h">
+      <b id="trayN"></b>
+      <span class="sp"></span>
+      <div class="seg">
+        <button type="button" data-tl="en" class="on">EN</button>
+        <button type="button" data-tl="vi">VI</button>
+      </div>
+      <button type="button" class="sm ghost" id="trayMin">Thu gọn</button>
+      <button type="button" class="sm ghost" id="trayClear">✕</button>
+    </div>
+    <div class="tray-b">
+      <div class="tray-items" id="trayItems"></div>
+      <div id="trayText"></div>
+      <div class="tray-act">
+        <button type="button" class="sm pri" id="trayCopyEn" data-i18n="tray_cp_en">Copy Prompt Anh</button>
+        <button type="button" class="sm" id="trayCopyVi" data-i18n="tray_cp_vi">Copy mô tả Việt</button>
+        <button type="button" class="sm" id="trayToStu" data-i18n="tray_stu">Đưa vào Studio</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Batch Action Bar -->
+  <div id="bbar" hidden>
+    <b id="bbN">Đã chọn 0</b>
+    <button type="button" data-b="all" data-i18n="bb_all">Chọn tất</button>
+    <button type="button" data-b="fav" data-i18n="bb_fav">Yêu thích</button>
+    <button type="button" data-b="unfav" hidden data-i18n="bb_unfav">Bỏ thích</button>
+    <button type="button" data-b="cp" data-i18n="bb_cp">Copy Prompt</button>
+    <button type="button" data-b="zip" data-i18n="bb_zip">Tải ZIP</button>
+    <button type="button" data-b="stu" data-i18n="bb_stu">Vào Studio</button>
+    <button type="button" data-b="x" class="pri" data-i18n="bb_done">Xong</button>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div id="lb" hidden role="dialog" aria-modal="true">
+    <div class="lb-bg" id="lbBg"></div>
+    <div class="lb-box">
+      <button type="button" class="icon lb-x" id="lbClose" aria-label="Close">✕</button>
+      <button type="button" class="icon lb-nav prev" id="lbPrev" aria-label="Prev">‹</button>
+      <button type="button" class="icon lb-nav next" id="lbNext" aria-label="Next">›</button>
+      <div class="lb-img"><img id="lbImg" alt=""></div>
+      <div class="lb-side" id="lbSide"></div>
+    </div>
+  </div>
+
+  <!-- Upload Images & JSON Import/Export Modal -->
+  <div id="impModal" class="mdl" hidden role="dialog" aria-modal="true">
+    <div class="imp-box">
+      <div class="pk-h">
+        <b data-i18n="imp_title">Quản lý kho dữ liệu Nam (Tải ảnh / Nhập JSON)</b>
+        <span class="sp"></span>
+        <button type="button" class="icon" id="impClose" aria-label="Close">✕</button>
+      </div>
+      <div class="imp-tabs">
+        <div class="seg">
+          <button type="button" data-imptab="img" class="on" data-i18n="imp_tab_img">Tải ảnh cục bộ lên</button>
+          <button type="button" data-imptab="json" data-i18n="imp_tab_json">Nhập / Xuất JSON</button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Upload local images -->
+      <div class="imp-body" id="impPaneImg">
+        <div class="imp-grid">
+          <label class="fld"><span data-i18n="imp_target">Lưu vào mục</span>
+            <select id="upType">
+              <option value="pose">Tư thế Nam (Poses)</option>
+              <option value="costume">Trang phục Nam (Outfits)</option>
+              <option value="portrait">Tóc &amp; Chân dung Nam (Portraits)</option>
+            </select>
+          </label>
+          <label class="fld"><span data-i18n="imp_cat">Phân loại</span>
+            <input id="upCat" type="text" value="Đứng / Standing" placeholder="Streetwear, Smart Casual, Đứng, Ngồi...">
+          </label>
+          <label class="fld"><span data-i18n="imp_tivi">Tiêu đề tiếng Việt</span>
+            <input id="upTiVi" type="text" placeholder="Ví dụ: Đứng khoác blazer góc 3/4">
+          </label>
+          <label class="fld"><span data-i18n="imp_tien">English Title / Prompt</span>
+            <input id="upEn" type="text" placeholder="e.g. confident man in navy blazer, three-quarter view">
+          </label>
+        </div>
+        <label class="fld"><span data-i18n="imp_descvi">Mô tả tiếng Việt (tùy chọn)</span>
+          <input id="upVi" type="text" placeholder="Mô tả chi tiết trang phục, tư thế, góc máy...">
+        </label>
+        <div class="drop" id="upDrop" tabindex="0" role="button">
+          <div class="dz">
+            <svg viewBox="0 0 24 24"><path d="M12 16V4m0 0-4 4m4-4 4 4M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <b data-i18n="imp_drop_img">Chọn hoặc kéo thả 1 hoặc nhiều ảnh (JPG/PNG/WebP/SVG)</b>
+            <small data-i18n="imp_drop_sub">Lưu vĩnh viễn trong trình duyệt (IndexedDB), dùng được ngay cho Studio &amp; Copy Prompt</small>
+          </div>
+          <input id="upFile" type="file" accept="image/*" multiple hidden>
+        </div>
+        <div class="imp-prev" id="upPrev"></div>
+        <div class="status-box" id="upStatus" hidden></div>
+        <div class="row">
+          <button type="button" class="pri" id="upSaveBtn" data-i18n="imp_save_img">Lưu ảnh vào thư viện</button>
+          <button type="button" class="ghost" id="upResetForm" data-i18n="btn_clear_form">Xóa biểu mẫu</button>
+        </div>
+      </div>
+
+      <!-- Tab 2: Import / Export JSON -->
+      <div class="imp-body" id="impPaneJson" hidden>
+        <p class="fine" style="margin:0" data-i18n="imp_json_help">Hỗ trợ nhập file JSON theo định dạng PoseWear Men (VI/EN) hoặc file JSON từ repo GitHub gốc (poses.json, costumes.json, items.json). Hệ thống tự động ánh xạ và chống trùng ID.</p>
+        <div class="row" style="margin-top:0">
+          <button type="button" class="sm" id="dlSampleJson" data-i18n="imp_dl_sample">Tải file JSON mẫu</button>
+          <button type="button" class="sm" id="expCustomJson" data-i18n="imp_exp_custom">Xuất dữ liệu đã thêm</button>
+          <button type="button" class="sm" id="expAllJson" data-i18n="imp_exp_all">Xuất toàn bộ kho JSON</button>
+          <span class="sp"></span>
+          <button type="button" class="sm ghost" id="clrCustomBtn" style="color:var(--bad)" data-i18n="imp_clr_custom">Xóa dữ liệu tự thêm</button>
+        </div>
+        <div class="imp-grid">
+          <label class="fld"><span data-i18n="imp_json_type">Mục mặc định nếu JSON không ghi type</span>
+            <select id="jsonDefType">
+              <option value="pose">Tư thế Nam (pose)</option>
+              <option value="costume">Trang phục Nam (costume)</option>
+              <option value="portrait">Chân dung Nam (portrait)</option>
+            </select>
+          </label>
+          <label class="fld"><span data-i18n="imp_json_file">Chọn tệp .json từ máy</span>
+            <input id="jsonFile" type="file" accept=".json,application/json">
+          </label>
+        </div>
+        <label class="fld"><span data-i18n="imp_json_paste">Hoặc dán trực tiếp nội dung JSON vào đây</span>
+          <textarea id="jsonText" rows="6" placeholder='[{"type":"costume","id":"my_suit_01","catVi":"Vest / Công sở","catEn":"Suit","tiVi":"Suit xanh rêu","tiEn":"Olive Suit","vi":"...","en":"men olive tailored suit...","t":"https://..."}]'></textarea>
+        </label>
+        <div class="status-box" id="jsonStatus" hidden></div>
+        <div class="row">
+          <button type="button" class="pri" id="jsonImportBtn" data-i18n="imp_run_json">Nhập JSON vào thư viện</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Studio Picker Modal -->
+  <div id="pk" class="mdl" hidden role="dialog" aria-modal="true">
+    <div class="pk-box">
+      <div class="pk-h">
+        <b id="pkT">Chọn</b>
+        <input id="pkQ" type="search" placeholder="Tìm nhanh...">
+        <button type="button" class="sm pri" id="pkDone" hidden>Xong</button>
+        <button type="button" class="icon" id="pkX" aria-label="Close">✕</button>
+      </div>
+      <div class="pk-g" id="pkG"></div>
+    </div>
+  </div>
+
+  <!-- API Settings Modal -->
+  <div id="cfg" class="mdl" hidden role="dialog" aria-modal="true">
+    <div class="cfg-box">
+      <div class="pk-h">
+        <b data-i18n="cfg_title">Cài đặt API (BYOK · Lưu cục bộ)</b>
+        <span class="sp"></span>
+        <button type="button" class="icon" id="cfgX" aria-label="Close">✕</button>
+      </div>
+      <div class="cfg-b">
+        <div class="prov">
+          <label><input type="radio" name="prov" value="openai" checked><span><b>OpenAI</b><small>gpt-image-1</small></span></label>
+          <label><input type="radio" name="prov" value="gemini"><span><b>Gemini</b><small>2.5-flash-image</small></span></label>
+          <label><input type="radio" name="prov" value="seedream"><span><b>Seedream</b><small>Volcengine Ark</small></span></label>
+          <label><input type="radio" name="prov" value="custom"><span><b>Custom / xAI</b><small>OpenAI Relay</small></span></label>
+        </div>
+        <p class="fine" id="cfHelp" style="margin:0"></p>
+        <label class="fld"><span>API Key</span>
+          <div class="kw">
+            <input id="cfKey" type="password" autocomplete="off" placeholder="sk-... / AIza...">
+            <button type="button" class="sm" id="cfEye">Hiện</button>
+          </div>
+        </label>
+        <div class="imp-grid">
+          <label class="fld"><span>Model</span>
+            <input id="cfModel" list="cfModels" placeholder="gpt-image-1">
+            <datalist id="cfModels"></datalist>
+          </label>
+          <label class="fld"><span>Base URL (tùy chọn)</span>
+            <input id="cfBase" type="url" placeholder="https://api.openai.com/v1">
+          </label>
+        </div>
+        <div class="imp-grid" id="cfProtoW" hidden>
+          <label class="fld"><span>Protocol</span>
+            <select id="cfProto">
+              <option value="edits">images/edits (Multipart)</option>
+              <option value="json">images/generations (JSON)</option>
+              <option value="xai">xAI Grok Imagine</option>
+              <option value="gemini">Gemini generateContent</option>
+            </select>
+          </label>
+          <label class="fld" id="cfFieldW"><span>Image Field</span>
+            <select id="cfField"><option value="image[]">image[]</option><option value="image">image</option></select>
+          </label>
+        </div>
+        <label class="tg">
+          <input type="checkbox" id="cfProxy">
+          <span><b data-i18n="cfg_proxy">Chuyển tiếp qua /api/proxy (Cloudflare Pages)</b><small data-i18n="cfg_proxy_sub">Bật khi gặp lỗi CORS (ví dụ Seedream hoặc Relay không mở CORS).</small></span>
+        </label>
+        <p id="cfMsg" class="fine"></p>
+      </div>
+      <div class="cfg-f">
+        <button type="button" class="sm" id="cfTest" data-i18n="cfg_test">Kiểm tra kết nối</button>
+        <button type="button" class="sm ghost" id="cfClr" data-i18n="cfg_clr">Xóa Key</button>
+        <span class="sp"></span>
+        <button type="button" class="pri" id="cfSave" data-i18n="cfg_save">Lưu cài đặt</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div id="helpBox" class="mdl" hidden role="dialog" aria-modal="true">
+    <div class="hb">
+      <h3 data-i18n="help_title">Phím tắt &amp; Hướng dẫn nhanh</h3>
+      <dl>
+        <dt><kbd>/</kbd></dt><dd data-i18n="hk_q">Tập trung ô tìm kiếm</dd>
+        <dt><kbd>1</kbd>–<kbd>6</kbd></dt><dd data-i18n="hk_tabs">Chuyển nhanh 6 tab chính</dd>
+        <dt><kbd>R</kbd></dt><dd data-i18n="hk_rand">Mở ngẫu nhiên 1 mẫu</dd>
+        <dt><kbd>T</kbd></dt><dd data-i18n="hk_theme">Chuyển Sáng / Tối</dd>
+        <dt><kbd>L</kbd></dt><dd data-i18n="hk_lang">Chuyển nhanh Việt / Anh</dd>
+        <dt><kbd>←</kbd><kbd>→</kbd></dt><dd data-i18n="hk_nav">Chuyển ảnh trong Lightbox</dd>
+        <dt><kbd>↑</kbd><kbd>↓</kbd></dt><dd data-i18n="hk_ang">Đổi 5 góc máy 3D tư thế nam</dd>
+        <dt><kbd>F</kbd> / <kbd>A</kbd> / <kbd>C</kbd></dt><dd data-i18n="hk_act">Yêu thích / Ghép combo / Copy Prompt</dd>
+      </dl>
+      <button type="button" class="pri" id="helpClose" style="width:100%" data-i18n="btn_close">Đóng</button>
+    </div>
+  </div>
+
+  <button id="toTop" class="icon" type="button" aria-label="Back to top">↑</button>
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <footer class="foot">
+    <div class="fi">
+      <div>
+        <b style="font-size:16px">PoseWear Men · v1.0</b>
+        <p data-i18n="foot_about">Phiên bản tiếng Việt / Anh dành riêng cho nam giới, xây dựng theo kiến trúc của atuizz/posewear (MIT). Tích hợp sẵn khung hình khối tư thế nam 3D SVG, outfit nam, chân dung tóc nam, công cụ tải ảnh/nhập JSON cục bộ và AI Try-On Studio BYOK.</p>
+      </div>
+      <div>
+        <h4 data-i18n="foot_feat">Tính năng chính</h4>
+        <ul>
+          <li data-i18n="foot_f1">• 24 tư thế nam × 5 góc máy 3D SVG (xuất PNG sắc nét)</li>
+          <li data-i18n="foot_f2">• 24 outfit nam (Streetwear, Suit, Smart Casual, Gym...)</li>
+          <li data-i18n="foot_f3">• Tải ảnh cục bộ &amp; Nhập/Xuất JSON lưu IndexedDB</li>
+          <li data-i18n="foot_f4">• Ghép Combo Prompt Anh/Việt 1 chạm cho Midjourney/Flux/Gemini</li>
+        </ul>
+      </div>
+      <div>
+        <h4 data-i18n="foot_priv">Quyền riêng tư &amp; Nguồn</h4>
+        <p data-i18n="foot_priv_p">100% chạy tĩnh trên trình duyệt (không backend, không thu thập dữ liệu). Ảnh tải lên, lịch sử tạo ảnh và API Key chỉ lưu cục bộ trên thiết bị của bạn. Kiến trúc tham khảo từ dự án mã nguồn mở PoseWear (MIT).</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="data-men.js?v=1.0"></script>
+  <script src="zip.js?v=1.0"></script>
+  <script src="app.js?v=1.0"></script>
+  <script src="studio.js?v=1.0"></script>
+</body>
+</html>
